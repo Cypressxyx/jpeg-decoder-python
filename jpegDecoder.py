@@ -1,4 +1,24 @@
 import time
+def idct(table):
+	b1 = [0 for i in range(1,65)]
+	b1[0] = table[0]
+
+	b2 = [0 for i in range(1,65)]
+	b2[0] = table[1]
+
+	imageTable =[]
+
+	#idct row
+	for i in range(0,8):
+		pos = 0;
+
+
+	
+
+	return imageTable
+def getRelative(table):
+	table[1] = table[1] + table[0]
+		
 def numSize(num):
 	cnt = 1
 	while(int(num / 2) != 0 ):
@@ -76,7 +96,7 @@ def readBinary(string):
 	return output
 
 
-def decodeBits(sString,hT):
+def decodeBits(sString,hT, table):
 	#print(hT)
 	prefix = sString[0]
 	encodeSize = 0
@@ -87,7 +107,6 @@ def decodeBits(sString,hT):
 		#print(prefix , " " , bin(hT[i][0])[2:], "i and idx:" , i ," ",idx)
 		#print(mapping[i], " ",bin(mapping[i][0])[2:] ," ", prefix)
 		if(hT[i][0] > int(prefix,2)):
-
 			idx += 1
 			prefix += sString[idx]
 		if((hT[i][0]) == int(prefix,2)):
@@ -102,15 +121,18 @@ def decodeBits(sString,hT):
 			prefix += sString[idx]
 			#shi	ft += 1
 			#sPrefix = string << 0 & shift
+
 	#remove from string
 	sString = sString[numSize(encodeSize):]
 
-	print("encoded value: " , val, " ", bin(encodeSize))
+	#print("encoded value: " , val, " ", bin(encodeSize))
 	if(val == 0):
+		'''
 		print("EOB Found, exiting")
 		print("remaining string: ", sString)
+		'''
 		sString = "EOB" + sString
-		print(" ")
+		#print(" ")
 		return sString
 
 	for i in range(0,val):
@@ -120,16 +142,18 @@ def decodeBits(sString,hT):
 	value = value
 	if(testStr[len(testStr) - 1] == "1"):
 		value = ~value
-	print("Code value:", value, testStr)
+	#print("Code value:", value, testStr)
 	#print("bytestream length:", len(sString))
-	sString = sString[val:]
-	print("remaining string: ", sString)
-	print(" ")
+	sString = sString[val:] 
+	#print("remaining string: ", sString)
+	#print(" ")
 
 	#time.sleep(3)
+	table.append(value)
 	return sString
 
 def decodeSosStream(stream,mapping):
+	table = []
 	#get num componenets
 	numComponents = stream[1]
 	stream = stream[2:]
@@ -183,44 +207,44 @@ def decodeSosStream(stream,mapping):
 	#aug 28 creating a new function that finds the encoding
 	while(len(sString) > 0):
 		#luminance values(y)
-		print(" y ac and dc values")
-		sString = decodeBits(sString,yDc)
+		#print(" y ac and dc values")
+		sString = decodeBits(sString,yDc, table)
+		
 		for i in range(0,63):
 			if(sString[:3] == "EOB"):
 				sString = sString[3:]
 				break
-			sString = decodeBits(sString,yAc)
+			sString = decodeBits(sString,yAc,table)
 
 		#chromiance cb values
-		print(" CB ac and dc values")
-		sString = decodeBits(sString,cbDc)
+		#print(" CB ac and dc values")
+		sString = decodeBits(sString,cbDc,table)
 		if(sString[:3] == "EOB"):
 			sString = sString[3:]
 		for i in range(0,63):
 			if(sString[:3] == "EOB"):
 				sString = sString[3:]
 				break
-			sString = decodeBits(sString,cbAc)
+			sString = decodeBits(sString,cbAc,table)
 
 		#chromiance cr values
-		print(" CR ac and dc values")
-		sString = decodeBits(sString,crDc)
+		#print(" CR ac and dc values")
+		sString = decodeBits(sString,crDc,table)
 		if(sString[:3] == "EOB"):
 			sString = sString[3:]
 		for i in range(0,63):
 			if(sString[:3] == "EOB"):
 				sString = sString[3:]
 				break
-			sString = decodeBits(sString,crAc)
+			sString = decodeBits(sString,crAc,table)
 
 		if(len(sString) < 8):
-			print("we are done boys")
-			sString = ""
+			return table
 	#printHex(stream) 
 	
 
 def main():
-	with open("C:\\Users\\Blvck_ac1d\\Desktop\\8x8.jpg","rb") as image:
+	with open("8x8.jpg","rb") as image:
 		file = image.read()
 		imageStream = bytearray(file)
 	#printImage(imageStream)
@@ -231,8 +255,12 @@ def main():
 	sosStream = getMarker(imageStream,0xda,0xd9)
 	#removing the ff value
 	sosStream = sosStream[:-1]
-	printHex(sosStream)
-	decodeSosStream(sosStream,mapping)
+	#printHex(sosStream)
+	table = decodeSosStream(sosStream,mapping)
+	getRelative(table)
+	print(table)
+	table = idct(table)
+
 
 
 main()	
