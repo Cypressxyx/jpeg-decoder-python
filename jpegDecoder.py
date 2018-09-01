@@ -1,4 +1,18 @@
 import time
+w1 = 2841 # 2048*sqrt(2)*cos(1*pi/16)
+w2 = 2676 # 2048*sqrt(2)*cos(2*pi/16)
+w3 = 2408 # 2048*sqrt(2)*cos(3*pi/16)
+w5 = 1609 # 2048*sqrt(2)*cos(5*pi/16)
+w6 = 1108 # 2048*sqrt(2)*cos(6*pi/16)
+w7 = 565  # 2048*sqrt(2)*cos(7*pi/16)
+w1pw7 = w1 + w7
+w1mw7 = w1 - w7
+w2pw6 = w2 + w6
+w2mw6 = w2 - w6
+w3pw5 = w3 + w5
+w3mw5 = w3 - w5
+r2 = 181
+
 def idct(table):
 	b1 = [0 for i in range(1,65)]
 	b1[0] = table[0]
@@ -10,12 +24,40 @@ def idct(table):
 
 	#idct row
 	for i in range(0,8):
-		pos = 0;
+		pos = i * 8
+		dc = b1[pos] << 3
+		b1[pos] = dc
+		b1[pos + 1] = dc
+		b1[pos + 2] = dc
+		b1[pos + 3] = dc
+		b1[pos + 4] = dc
+		b1[pos + 5] = dc
+		b1[pos + 6] = dc
+		b1[pos + 7] = dc
 
-
-	
+	for i in range(0,8):
+		pos = i * 8
+		dc = (b1[pos ] << 8) + 8192
+		b1[pos] = dc
+		b1[pos + 1] = dc
+		b1[pos + 2] = dc
+		b1[pos + 3] = dc
+		b1[pos + 4] = dc
+		b1[pos + 5] = dc
+		b1[pos + 6] = dc
+		b1[pos + 7] = dc
+	#print(b1)
 
 	return imageTable
+
+def decodeQuantTable(stream):
+	quantTable = []	
+	stream = stream[2:]
+	while(len(stream) > 0):
+		quantTable.append(stream[0])
+		stream = stream[1:]
+	return quantTable
+
 def getRelative(table):
 	table[1] = table[1] + table[0]
 		
@@ -244,11 +286,18 @@ def decodeSosStream(stream,mapping):
 	
 
 def main():
-	with open("8x8.jpg","rb") as image:
+	with open("C:\\Users\\Blvck_ac1d\\Documents\\Documents\\GitHub\\jpeg-huffman-decoding-python-\\8x8.jpg","rb") as image:
 		file = image.read()
 		imageStream = bytearray(file)
-	#printImage(imageStream)
+	printImage(imageStream)
+
+	quantStream = getMarker(imageStream,0xdb,0xff)
+	#print(quantStream)
+	quantTable = decodeQuantTable(quantStream)
+	print(quantTable)
+
 	huffmanStream = getMarker(imageStream,0xc4,0xff)
+
 	mapping = decodeHuffmanTable(huffmanStream)
 	#printHex(huffmanStream)
 
